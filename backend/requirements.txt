@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+llama-index
+llama-index-llms-ollama
+llama-index-llms-groq
+llama-index-embeddings-ollama
+llama-index-readers-file
+pymupdf
+python-dotenv
