@@ -1,16 +1,26 @@
 import os
+import time
 import asyncio
 import chromadb
 from dotenv import load_dotenv
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings, StorageContext
 from llama_index.llms.groq import Groq
-from llama_index.embeddings.ollama import OllamaEmbedding
+from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
-load_dotenv()
 
-OLLAMA_BASE = "http://localhost:11434"
-CHROMA_DIR = "chroma_db"
+class RateLimitedGoogleGenAIEmbedding(GoogleGenAIEmbedding):
+    def __init__(self, batch_delay: float = 2.5, **kwargs):
+        super().__init__(**kwargs)
+        self.batch_delay = batch_delay
+
+    def _get_text_embeddings(self, texts):
+        time.sleep(self.batch_delay)
+        return super()._get_text_embeddings(texts)
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
+CHROMA_DIR = os.getenv("CHROMA_DIR", "chroma_db")
 COLLECTION_NAME = "research_papers"
 
 
@@ -25,7 +35,18 @@ class RAGEngine:
         self.ready = False
 
         Settings.llm = Groq(model="llama-3.3-70b-versatile", api_key=api_key)
-        Settings.embed_model = OllamaEmbedding(model_name="nomic-embed-text", base_url=OLLAMA_BASE)
+        gemini_api_key = os.getenv("GEMINI_API_KEY", "")
+        Settings.embed_model = RateLimitedGoogleGenAIEmbedding(
+            model_name="gemini-embedding-2",
+            api_key=gemini_api_key,
+            embed_batch_size=10,
+            batch_delay=2.5,
+            retries=15,
+            timeout=120,
+            retry_min_seconds=5,
+            retry_max_seconds=120,
+            retry_exponential_base=2,
+        )
 
         self.db_client = chromadb.PersistentClient(path=CHROMA_DIR)
         self.chroma_collection = self.db_client.get_or_create_collection(COLLECTION_NAME)
