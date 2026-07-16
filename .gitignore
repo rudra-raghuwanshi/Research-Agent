@@ -6,6 +6,7 @@ frontend/.next/
 venv/
 __pycache__/
 *.pyc
+storage/
 backend/storage/
 backend/papers/
 chroma_db/
