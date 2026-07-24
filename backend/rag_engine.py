@@ -3,6 +3,7 @@ import time
 import asyncio
 import chromadb
 from dotenv import load_dotenv
+from pydantic import Field
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings, StorageContext
 from llama_index.llms.groq import Groq
 from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
@@ -10,9 +11,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 
 
 class RateLimitedGoogleGenAIEmbedding(GoogleGenAIEmbedding):
-    def __init__(self, batch_delay: float = 2.5, **kwargs):
-        super().__init__(**kwargs)
-        self.batch_delay = batch_delay
+    batch_delay: float = Field(default=2.5, description="Delay in seconds between embedding batch API calls")
 
     def _get_text_embeddings(self, texts):
         time.sleep(self.batch_delay)
