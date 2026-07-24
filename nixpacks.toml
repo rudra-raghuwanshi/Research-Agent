@@ -1,2 +1,0 @@
-[start]
-cmd = "sh -c \"which python3; which uvicorn; find / -iname 'uvicorn*' 2>/dev/null; find / -iname 'python3' 2>/dev/null; sleep 300\""
